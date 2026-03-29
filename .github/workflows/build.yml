@@ -1,27 +1,32 @@
 name: Build-Helios-7870
 on:
   workflow_dispatch:
+    inputs:
+      defconfig_name:
+        description: 'اسم ملف الإعدادات (مثلاً helios_defconfig)'
+        default: 'helios_defconfig'
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Install tools
+      - name: Install Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential bc libncurses5-dev libssl-dev xz-utils wget curl python2 gcc-aarch64-linux-gnu
+          sudo apt-get update -y
+          sudo apt-get install dialog bash sed wget git curl zip tar jq expect make cmake automake autoconf llvm lld lldb clang gcc binutils apt-utils bison perl gperf gawk flex bc python3 zstd openssl unzip cpio bc bison build-essential ccache liblz4-tool libsdl1.2-dev libstdc++6 libxml2 libxml2-utils lzop pngcrush schedtool squashfs-tools xsltproc zlib1g-dev libncurses5-dev bzip2 git gcc g++ libssl-dev gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi g++-aarch64-linux-gnu g++-arm-linux-gnueabi g++-arm-linux-gnueabihf dwarves libelf-dev dos2unix kmod -y
 
-      - name: Compile
+      - name: Compile Kernel
         run: |
           export ARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
-          make helios_defconfig
+          make ${{ github.event.inputs.defconfig_name }}
           make -j$(nproc)
 
-      - name: Upload
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Helios-Kernel-Image
+          name: Helios-Kernel-Result
           path: arch/arm64/boot/Image.gz-dtb
